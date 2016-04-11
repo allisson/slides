@@ -39,17 +39,487 @@
             
             <section>
                 <h2>Allisson Azevedo</h2>
-                <a href="http://allissonazevedo.com" target="_blank">allissonazevedo.com</a>
+                <p>
+                    <a href="http://allissonazevedo.com" target="_blank">allissonazevedo.com</a>
+                </p>
+                <p>
+                    <a href="https://youtube.com/user/allissonazevedo" target="_blank">youtube.com/user/allissonazevedo</a>
+                </p>
+                <p>
+                    <a href="https://github.com/allisson" target="_blank">github.com/allisson</a>
+                </p>
+                <p>
+                    <a href="https://twitter.com/allisson" target="_blank">twitter.com/allisson</a>
+                </p>
+                <p>
+                    <a href="http://allisson.github.io/slides/" target="_blank">allisson.github.io/slides/</a>
+                </p>
+                <p>
+                    <a href="mailto:allisson@gmail.com" target="_blank">allisson@gmail.com</a>
+                </p>
+            </section>
+
+            <section>
+                <h2>Objetivo</h2>
+                <ul>
+                    <li class="fragment">
+                        Crawlear o <a href="http://www.tudogostoso.com.br">http://www.tudogostoso.com.br</a>
+                    </li>
+                    <li class="fragment">
+                        Obter as receitas com imagem
+                    </li>
+                    <li class="fragment">
+                        Indexar no Elasticsearch
+                    </li>
+                    <li class="fragment">
+                        Exibir os resultados com o ExpressJS
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Web Crawler / Robot / Spider</h2>
+                <ul>
+                    <li class="fragment">
+                        Um programa que navega por toda a rede de maneira automática
+                    </li>
+                    <li class="fragment">
+                        Googlebot, BingBot, Yahoo! Slurp, Baiduspider
+                    </li>
+                    <li class="fragment">
+                        Opção quando não houver acesso aos dados via Web API
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Funcionamento</h2>
+                <ol>
+                    <li class="fragment">
+                        Carrega url
+                    </li>
+                    <li class="fragment">
+                        Parser do conteúdo
+                    </li>
+                    <li class="fragment">
+                        Carrega novas urls a partir dos links da atual
+                    </li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Ferramentas</h2>
+                <ul>
+                    <li class="fragment">
+                        npm install request
+                    </li>
+                    <li class="fragment">
+                        npm install cheerio
+                    </li>
+                    <li class="fragment">
+                        npm install simplecrawler
+                    </li>
+                </ul>    
+            </section>
+                
+            </section>
+
+            <section>
+                <h2>Speakers do JSday</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const request = require('request');
+const cheerio = require('cheerio');
+
+request('http://jsday.com.br/speakers/', (error, response, body) => {
+  let $ = cheerio.load(body);
+  let speakers = [];
+  $('.people-modal').each((i, element) => {
+    let speaker = {};
+    speaker.title = $(element).find('h4').text();
+    speaker.description = $(element).find('.theme-description').text();
+    speaker.name = $(element).find('.name').contents()[0].data.trim();
+    speaker.about = $(element).find('.about').text();
+    speaker.image = $(element).find('.people-img').css('background-image').replace('url(', '').replace(')', '');
+    speakers.push(speaker);
+  });
+  console.log(JSON.stringify(speakers, null, 2));
+});
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Programação do JSday</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const request = require('request');
+const cheerio = require('cheerio');
+
+request('http://jsday.com.br/schedule/', (error, response, body) => {
+  let $ = cheerio.load(body);
+  let subEvents = [];
+  $('.timeslot[itemtype="http://schema.org/subEvent"]').each((i, element) => {
+    let event = {};
+    event.title = $(element).find('.slot-title').text();
+    event.time = $(element).find('.start-time').attr('datetime');
+    subEvents.push(event);
+  });
+  console.log(JSON.stringify(subEvents, null, 2));
+});
+                </code></pre>
+            </section>
+                
+            </section>
+
+            <section>
+                <h2>Crawler simples</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const request = require('request');
+const cheerio = require('cheerio');
+const startUrl = 'https://allissonazevedo.com/';
+const hostname = new RegExp(startUrl);
+let urlSet = new Set();
+let pages = [];
+
+function normalizeUrl(url) {
+  return url.split('?')[0].split('#')[0];
+}
+
+function verifyUrl(url) {
+  if (
+    url.match(/\.xml$/i) ||
+    url.match(/\/feed\/$/i) ||
+    url.match(/\/amp\/$/i)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function getPage(url) {
+  url = normalizeUrl(url);
+  if (urlSet.has(url)) {
+    return;
+  }
+  if (!verifyUrl(url)) {
+    return;
+  }
+  urlSet.add(url);
+  request(url, (error, response, body) => {
+    if (error || response.statusCode != 200) {
+      return;
+    }
+    let $ = cheerio.load(body);
+    pages.push({ url: url, title: $('title').text() });
+    $('[href]').each((i, element) => {
+      let newUrl = normalizeUrl($(element).attr('href'));
+      if (hostname.test(newUrl)) {
+        getPage(newUrl);
+      }
+    });
+
+  });
+};
+
+getPage(startUrl);
+
+process.on('exit', () => {
+  console.log(JSON.stringify(pages, null, 2));
+});
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Simplecrawler</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const Crawler = require('simplecrawler');
+const myCrawler = new Crawler('allissonazevedo.com');
+const cheerio = require('cheerio');
+let pages = [];
+
+myCrawler.interval = 100;
+myCrawler.maxConcurrency = 16;
+myCrawler.stripQuerystring = true;
+
+const verifyUrl = myCrawler.addFetchCondition((parsedURL, queueItem) => {
+  if (
+    parsedURL.path.match(/\.xml$/i) ||
+    parsedURL.path.match(/\/feed\/$/i) ||
+    parsedURL.path.match(/\/amp\/$/i)
+  ) {
+    return false;
+  }
+  return true;
+});
+
+myCrawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  let $ = cheerio.load(responseBuffer);
+  pages.push({ url: queueItem.url, title: $('title').text() });
+});
+
+myCrawler.start();
+
+process.on('exit', () => {
+  console.log(JSON.stringify(pages, null, 2));
+});
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Crawleando o Tudogostoso</h2>
+                <ol>
+                    <li class="fragment">Verificar as urls que são carregadas</li>
+                    <li class="fragment">Identificar as urls que são receitas</li>
+                    <li class="fragment">Parser e indexação no Elasticsearch</li>
+                </ol>
+            </section>
+
+            <section>
+                <h2>Verificando urls</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const Crawler = require('simplecrawler');
+const myCrawler = new Crawler('www.tudogostoso.com.br');
+
+myCrawler.interval = 100;
+myCrawler.stripQuerystring = true;
+myCrawler.maxConcurrency = 16;
+
+myCrawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  console.log(queueItem.url);
+});
+
+myCrawler.start();
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Urls que devemos evitar</h2>
+                <small>http://www.tudogostoso.com.br/favicon-v2.1.ico</small>
                 <br>
-                <a href="https://youtube.com/user/allissonazevedo" target="_blank">youtube.com/user/allissonazevedo</a>
+                <small>http://www.tudogostoso.com.br/app/assets/stylesheets/ie.css</small>
                 <br>
-                <a href="https://github.com/allisson" target="_blank">github.com/allisson</a>
+                <small>http://www.tudogostoso.com.br/images/layout/logo-v4.png</small>
                 <br>
-                <a href="https://twitter.com/allisson" target="_blank">twitter.com/allisson</a>
+                <small>http://www.tudogostoso.com.br/assets/layout/blank.gif</small>
                 <br>
-                <a href="http://allisson.github.io/slides/" target="_blank">allisson.github.io/slides/</a>
+                <small>http://www.tudogostoso.com.br/imagens/renew/footer-bg.jpg</small>
                 <br>
-                <a href="mailto:allisson@gmail.com" target="_blank">allisson@gmail.com</a>
+                <small>http://www.tudogostoso.com.br/dicas/10-pontos-do-brigadeiro/print</small>
+                <br>
+                <small>http://www.tudogostoso.com.br/receita/print_recipe.php?recipe_id=2721</small>
+                <br>
+                <small>http://www.tudogostoso.com.br/receita/4683/comentarios.js</small>
+            </section>
+
+            <section>
+                <h2>Evitando o download de urls</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const Crawler = require('simplecrawler');
+const myCrawler = new Crawler('www.tudogostoso.com.br');
+
+myCrawler.interval = 100;
+myCrawler.stripQuerystring = true;
+myCrawler.maxConcurrency = 16;
+
+const verifyUrl = myCrawler.addFetchCondition((parsedURL, queueItem) => {
+  if (
+    parsedURL.path.match(/\.ico$/i) ||
+    parsedURL.path.match(/\.css$/i) ||
+    parsedURL.path.match(/\.png$/i) ||
+    parsedURL.path.match(/\.gif$/i) ||
+    parsedURL.path.match(/\.jpg$/i) ||
+    parsedURL.path.match(/\.js$/i) ||
+    parsedURL.path.match(/print_recipe\.php/i) ||
+    parsedURL.path.match(/\/print$/i)
+  ) {
+    return false;
+  }
+  return true;
+});
+
+myCrawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  console.log(queueItem.url);
+});
+
+myCrawler.start();
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Urls de receitas</h2>
+                <p>
+                    <small>http://www.tudogostoso.com.br/receita/76147-anchova-assada.html</small>
+                </p>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const re = /\/receita\/([0-9]+)-([\w-]+)\.html$/i;
+const urls = [
+  'http://www.tudogostoso.com.br/',
+  'http://www.tudogostoso.com.br/categorias/bolos-e-tortas-doces.php',
+  'http://www.tudogostoso.com.br/receita/179236-petit-gateau-de-nutella-perfeito.html'
+];
+for (let url of urls) {
+  if (re.test(url)) {
+    console.log(url + ' é uma receita.');
+  } else {
+    console.log(url + ' não é uma receita');
+  }
+}
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Parser da receita</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const cheerio = require('cheerio');
+const Crawler = require('simplecrawler');
+const myCrawler = new Crawler('www.tudogostoso.com.br');
+const re = /\/receita\/([0-9]+)-([\w-]+)\.html$/i;
+
+myCrawler.interval = 100;
+myCrawler.stripQuerystring = true;
+myCrawler.maxConcurrency = 16;
+
+const verifyUrl = myCrawler.addFetchCondition((parsedURL, queueItem) => {
+  if (
+    parsedURL.path.match(/\.ico$/i) ||
+    parsedURL.path.match(/\.css$/i) ||
+    parsedURL.path.match(/\.png$/i) ||
+    parsedURL.path.match(/\.gif$/i) ||
+    parsedURL.path.match(/\.jpg$/i) ||
+    parsedURL.path.match(/\.js$/i) ||
+    parsedURL.path.match(/print_recipe\.php/i) ||
+    parsedURL.path.match(/\/print$/i)
+  ) {
+    return false;
+  }
+  return true;
+});
+
+function parseResponse(queueItem, responseBuffer) {
+  let $ = cheerio.load(responseBuffer);
+  let recipe = {};
+  recipe.url = queueItem.url;
+  recipe.name = $('.recipe-title h1').text().trim();
+  recipe.image = $('.photo.pic.u-photo').attr('src');
+  recipe.ingredients = [];
+  $('.p-ingredient').each((i, element) => {
+    recipe.ingredients.push($(element).text());
+  });
+  recipe.instructions = [];
+  $('.instructions.e-instructions li').each((i, element) => {
+    recipe.instructions.push($(element).text());
+  });
+  recipe.yield = $('.p-yield.num yield').attr('value');
+  recipe.preptime = $('.dt-duration').attr('datetime');
+  return recipe;
+}
+
+myCrawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  if (!re.test(queueItem.url)) {
+    return;
+  }
+  let recipe = parseResponse(queueItem, responseBuffer);
+  console.log(recipe);
+});
+
+myCrawler.start();
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Indexando no Elasticsearch</h2>
+                <pre><code class="hljs" data-trim>
+'use strict';
+const cheerio = require('cheerio');
+const Crawler = require('simplecrawler');
+const myCrawler = new Crawler('www.tudogostoso.com.br');
+const re = /\/receita\/([0-9]+)-([\w-]+)\.html$/i;
+const elasticsearch = require('elasticsearch');
+const client = new elasticsearch.Client({
+  host: 'localhost:9200',
+  log: 'trace'
+});
+
+myCrawler.interval = 100;
+myCrawler.stripQuerystring = true;
+myCrawler.maxConcurrency = 16;
+
+const verifyUrl = myCrawler.addFetchCondition((parsedURL, queueItem) => {
+  if (
+    parsedURL.path.match(/\.ico$/i) ||
+    parsedURL.path.match(/\.css$/i) ||
+    parsedURL.path.match(/\.png$/i) ||
+    parsedURL.path.match(/\.gif$/i) ||
+    parsedURL.path.match(/\.jpg$/i) ||
+    parsedURL.path.match(/\.js$/i) ||
+    parsedURL.path.match(/print_recipe\.php/i) ||
+    parsedURL.path.match(/\/print$/i)
+  ) {
+    return false;
+  }
+  return true;
+});
+
+function parseResponse(queueItem, responseBuffer) {
+  let $ = cheerio.load(responseBuffer);
+  let recipe = {};
+  recipe.url = queueItem.url;
+  recipe.name = $('.recipe-title h1').text().trim();
+  recipe.image = $('.photo.pic.u-photo').attr('src');
+  recipe.ingredients = [];
+  $('.p-ingredient').each((i, element) => {
+    recipe.ingredients.push($(element).text());
+  });
+  recipe.instructions = [];
+  $('.instructions.e-instructions li').each((i, element) => {
+    recipe.instructions.push($(element).text());
+  });
+  recipe.yield = $('.p-yield.num yield').attr('value');
+  recipe.preptime = $('.dt-duration').attr('datetime');
+  return recipe;
+}
+
+function indexRecipe(recipe) {
+  client.index({
+    index: 'crawler',
+    type: 'recipe',
+    body: recipe
+  }, (error, response) => {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log(response);
+    }
+  });
+};
+
+myCrawler.on('fetchcomplete', (queueItem, responseBuffer, response) => {
+  if (!re.test(queueItem.url)) {
+    return;
+  }
+  let recipe = parseResponse(queueItem, responseBuffer);
+  if (!recipe.image) {
+    return;
+  }
+  indexRecipe(recipe);
+});
+
+myCrawler.start();
+                </code></pre>
+            </section>
+
+            <section>
+              <h2>Demo do WebApp</h2>
+            </section>
+
+            <section>
+              <h2>Obrigado!</h2>
             </section>
 
         </div>
@@ -62,6 +532,7 @@
         progress: true,
         history: true,
         center: true,
+        slideNumber: 'c/t',
         transition: 'zoom', // none/fade/slide/convex/concave/zoom
         dependencies: [{
             src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.2.0/lib/js/classList.min.js',
