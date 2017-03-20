@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Programação Assíncrona com Asyncio</title>
+    <meta name="description" content="Programação Assíncrona com Asyncio">
+    <meta name="author" content="Allisson Azevedo">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/reveal.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/theme/league.min.css" id="theme">
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/lib/css/zenburn.min.css">
+    <!-- Printing and PDF exports -->
+    <script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match(/print-pdf/gi) ? '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/print/pdf.min.css' : '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/print/paper.min.css';
+    document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/lib/js/html5shiv.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="reveal">
+        <!-- Any section element inside of this container is displayed as a slide -->
+        <div class="slides">
+            
+            <section>
+                <h2>Programação Assíncrona com Asyncio</h2>
+                <h3>PythonDay Campina Grande 2017</h3>
+                <p>Allisson Azevedo</p>
+            </section>
+            
+            <section>
+                <h2>Allisson Azevedo</h2>
+                <p>
+                    <a href="http://allissonazevedo.com" target="_blank">allissonazevedo.com</a>
+                </p>
+                <p>
+                    <a href="https://youtube.com/user/allissonazevedo" target="_blank">youtube.com/user/allissonazevedo</a>
+                </p>
+                <p>
+                    <a href="https://github.com/allisson" target="_blank">github.com/allisson</a>
+                </p>
+                <p>
+                    <a href="https://twitter.com/allisson" target="_blank">twitter.com/allisson</a>
+                </p>
+                <p>
+                    <a href="http://allisson.github.io/slides/" target="_blank">allisson.github.io/slides/</a>
+                </p>
+                <p>
+                    <a href="mailto:allisson@gmail.com" target="_blank">allisson@gmail.com</a>
+                </p>
+            </section>
+
+            <section>
+              <h2>Obrigado!</h2>
+            </section>
+
+        </div>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/lib/js/head.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/js/reveal.min.js"></script>
+    <script>
+    Reveal.initialize({
+        controls: false,
+        progress: true,
+        history: true,
+        center: true,
+        slideNumber: 'c/t',
+        transition: 'zoom', // none/fade/slide/convex/concave/zoom
+        dependencies: [{
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/lib/js/classList.min.js',
+            condition: function() {
+                return !document.body.classList;
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/plugin/markdown/marked.min.js',
+            condition: function() {
+                return !!document.querySelector('[data-markdown]');
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/plugin/markdown/markdown.min.js',
+            condition: function() {
+                return !!document.querySelector('[data-markdown]');
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/plugin/highlight/highlight.min.js',
+            async: true,
+            callback: function() {
+                hljs.initHighlightingOnLoad();
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/plugin/zoom-js/zoom.min.js',
+            async: true
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/plugin/notes/notes.min.js',
+            async: true
+        }]
+    });
+    </script>
+</body>
+
+</html>
