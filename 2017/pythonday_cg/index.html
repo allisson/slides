@@ -32,13 +32,13 @@
         <div class="slides">
             
             <section>
-                <h2>Programação Assíncrona com Asyncio</h2>
-                <h3>PythonDay Campina Grande 2017</h3>
+                <h3>Programação Assíncrona com Asyncio</h3>
+                <p>PythonDay Campina Grande 2017<p>
                 <p>Allisson Azevedo</p>
             </section>
             
             <section>
-                <h2>Allisson Azevedo</h2>
+                <h3>Allisson Azevedo</h3>
                 <p>
                     <a href="http://allissonazevedo.com" target="_blank">allissonazevedo.com</a>
                 </p>
@@ -52,11 +52,144 @@
                     <a href="https://twitter.com/allisson" target="_blank">twitter.com/allisson</a>
                 </p>
                 <p>
+                    <a href="https://www.linkedin.com/in/allisson/" target="_blank">linkedin.com/in/allisson/</a>
+                </p>
+                <p>
                     <a href="http://allisson.github.io/slides/" target="_blank">allisson.github.io/slides/</a>
                 </p>
                 <p>
                     <a href="mailto:allisson@gmail.com" target="_blank">allisson@gmail.com</a>
                 </p>
+            </section>
+
+            <section>
+                <h3>The C10K problem</h3>
+                <p>Como lidar com 10k conexões simultâneas</p>
+                <p>
+                    <a href="http://www.kegel.com/c10k.html">http://www.kegel.com/c10k.html</a>
+                </p>
+            </section>
+
+            <section>
+                <h3>Concorrência</h3>
+                <p><a href="https://blog.golang.org/concurrency-is-not-parallelism">Não confundir com paralelismo</a></p>
+                <p>Asynchronous I/O</p>
+                <p>O exemplo do garçom</p>
+            </section>
+
+            <section>
+                <h3>Programação síncrona</h3>
+                <pre><code class="python" data-trim>
+import time
+import requests
+from github import REPOS, ACCESS_TOKEN
+
+start = time.time()
+for repo_url in REPOS:
+    response = requests.get(repo_url, params={'access_token': ACCESS_TOKEN}).json()
+    repo_info = {
+        'name': response['name'],
+        'full_name': response['full_name'],
+        'stargazers_count': response['stargazers_count']
+    }
+    print(repo_info)
+end = time.time()
+print('Tempo de execução={:.2f} segundos'.format(end - start))
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Concorrência usando threads</h3>
+                <pre><code class="python" data-trim>
+import time
+import threading
+import queue
+import requests
+from github import REPOS, ACCESS_TOKEN
+
+max_threads = 5
+start = time.time()
+q = queue.Queue()
+
+
+def load_queue():
+    for repo_url in REPOS:
+        q.put(repo_url)
+
+
+def grab_data_from_queue():
+    while not q.empty():
+        repo_url = q.get()
+        response = requests.get(repo_url, params={'access_token': ACCESS_TOKEN}).json()
+        repo_info = {
+            'name': response['name'],
+            'full_name': response['full_name'],
+            'stargazers_count': response['stargazers_count']
+        }
+        print(repo_info)
+        q.task_done()
+
+
+load_queue()
+for i in range(max_threads):
+    thread = threading.Thread(target=grab_data_from_queue)
+    thread.start()
+q.join()
+end = time.time()
+print('Tempo de execução={:.2f} segundos'.format(end - start))
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Problemas com threads</h3>
+                <p><a href="https://wiki.python.org/moin/GlobalInterpreterLock">Global Interpreter Lock (GIL)</a></p>
+                <p>Consumo de recursos</p>
+            </section>
+
+            <section>
+                <h3>Concorrência usando multiprocessing</h3>
+                <pre><code class="python" data-trim>
+import time
+import multiprocessing
+import requests
+from github import REPOS, ACCESS_TOKEN
+
+workers = 5
+start = time.time()
+q = multiprocessing.JoinableQueue()
+
+
+def load_queue():
+    for repo_url in REPOS:
+        q.put(repo_url)
+
+
+def grab_data_from_queue():
+    while not q.empty():
+        repo_url = q.get()
+        response = requests.get(repo_url, params={'access_token': ACCESS_TOKEN}).json()
+        repo_info = {
+            'name': response['name'],
+            'full_name': response['full_name'],
+            'stargazers_count': response['stargazers_count']
+        }
+        print(repo_info)
+        q.task_done()
+
+
+load_queue()
+for i in range(workers):
+    process = multiprocessing.Process(target=grab_data_from_queue)
+    process.start()
+q.join()
+end = time.time()
+print('Tempo de execução={:.2f} segundos'.format(end - start))
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Problemas com multiprocessing</h3>
+                <p>Consumo de recursos</p>
             </section>
 
             <section>
