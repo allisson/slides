@@ -66,13 +66,13 @@
                 <h3>The C10K problem</h3>
                 <p>Como lidar com 10k conexões simultâneas</p>
                 <p>
-                    <a href="http://www.kegel.com/c10k.html">http://www.kegel.com/c10k.html</a>
+                    <a href="http://www.kegel.com/c10k.html" target="_blank">http://www.kegel.com/c10k.html</a>
                 </p>
             </section>
 
             <section>
                 <h3>Concorrência</h3>
-                <p><a href="https://blog.golang.org/concurrency-is-not-parallelism">Não confundir com paralelismo</a></p>
+                <p><a href="https://blog.golang.org/concurrency-is-not-parallelism" target="_blank">Não confundir com paralelismo</a></p>
                 <p>Asynchronous I/O</p>
                 <p>O exemplo do garçom</p>
             </section>
@@ -100,7 +100,7 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
 
             <section>
                 <h3>Problemas com programação síncrona</h3>
-                <p>Uma requisição https por vez</p>
+                <p>Uma requisição https por vez (Blocking I/O)</p>
                 <p></p>
             </section>
 
@@ -148,12 +148,12 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
 
             <section>
                 <h3>Problemas com threads</h3>
-                <p><a href="https://wiki.python.org/moin/GlobalInterpreterLock">Global Interpreter Lock (GIL)</a></p>
+                <p><a href="https://wiki.python.org/moin/GlobalInterpreterLock" target="_blank">Global Interpreter Lock (GIL)</a></p>
                 <p>Consumo de recursos</p>
             </section>
 
             <section>
-                <h3>Concorrência usando multiprocessing</h3>
+                <h3>Concorrência usando process</h3>
                 <pre><code class="python" data-trim>
 import time
 import multiprocessing
@@ -232,6 +232,25 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
                 <h3>Problemas com concurrent.futures</h3>
                 <p>ThreadPoolExecutor - usa threads</p>
                 <p>ProcessPoolExecutor - usa process</p>
+            </section>
+
+            <section>
+                <h3>Nonblocking I/O com Python</h3>
+                <p>
+                    <a href="https://twistedmatrix.com/trac/" target="_blank">Twisted</a>
+                </p>
+                <p>
+                    <a href="http://www.tornadoweb.org/en/stable/" target="_blank">Tornado</a>
+                </p>
+                <p>
+                    <a href="http://eventlet.net/" target="_blank">Eventlet</a>
+                </p>
+                <p>
+                    <a href="http://www.gevent.org/" target="_blank">Gevent</a>
+                </p>
+                <p>
+                    <a href="https://docs.python.org/3/library/asyncio.html" target="_blank">Asyncio</a>
+                </p>
             </section>
 
             <section>
