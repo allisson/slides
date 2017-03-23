@@ -113,15 +113,6 @@ import queue
 import requests
 from github import REPOS, ACCESS_TOKEN
 
-max_threads = 5
-start = time.time()
-q = queue.Queue()
-
-
-def load_queue():
-    for repo_url in REPOS:
-        q.put(repo_url)
-
 
 def grab_data_from_queue():
     while not q.empty():
@@ -136,10 +127,17 @@ def grab_data_from_queue():
         q.task_done()
 
 
-load_queue()
+max_threads = 5
+start = time.time()
+q = queue.Queue()
+
+for repo_url in REPOS:
+    q.put(repo_url)
+
 for i in range(max_threads):
     thread = threading.Thread(target=grab_data_from_queue)
     thread.start()
+
 q.join()
 end = time.time()
 print('Tempo de execução={:.2f} segundos'.format(end - start))
@@ -160,15 +158,6 @@ import multiprocessing
 import requests
 from github import REPOS, ACCESS_TOKEN
 
-workers = 5
-start = time.time()
-q = multiprocessing.JoinableQueue()
-
-
-def load_queue():
-    for repo_url in REPOS:
-        q.put(repo_url)
-
 
 def grab_data_from_queue():
     while not q.empty():
@@ -183,10 +172,17 @@ def grab_data_from_queue():
         q.task_done()
 
 
-load_queue()
+workers = 5
+start = time.time()
+q = multiprocessing.JoinableQueue()
+
+for repo_url in REPOS:
+    q.put(repo_url)
+
 for i in range(workers):
     process = multiprocessing.Process(target=grab_data_from_queue)
     process.start()
+
 q.join()
 end = time.time()
 print('Tempo de execução={:.2f} segundos'.format(end - start))
@@ -206,9 +202,6 @@ from concurrent import futures
 import requests
 from github import REPOS, ACCESS_TOKEN
 
-workers = 5
-start = time.time()
-
 
 def get_repo_info(repo_url):
     response = requests.get(repo_url, params={'access_token': ACCESS_TOKEN}).json()
@@ -219,6 +212,9 @@ def get_repo_info(repo_url):
     }
     print(repo_info)
 
+
+workers = 5
+start = time.time()
 
 with futures.ThreadPoolExecutor(workers) as executor:
     executor.map(get_repo_info, REPOS)
@@ -251,6 +247,81 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
                 <p>
                     <a href="https://docs.python.org/3/library/asyncio.html" target="_blank">Asyncio</a>
                 </p>
+            </section>
+
+            <section>
+                <h3>Asyncio</h3>
+                <p>
+                    <a href="http://code.google.com/p/tulip/" target="_blank">Tulip</a>
+                </p>
+                <p>
+                    <a href="https://www.python.org/dev/peps/pep-3156/" target="_blank">PEP-3156</a>
+                </p>
+                <p>Python 3.4+</p>
+            </section>
+
+            <section>
+                <h3>Hello World com Asyncio</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+
+
+async def hello_world():
+    print('Hello World!')
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(hello_world())
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Hello World com Asyncio</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+
+
+async def hello_world(name):
+    print('Hello World, {}!'.format(name))
+
+loop = asyncio.get_event_loop()
+tasks = []
+for name in ('fulano', 'cicrano', 'beltrano'):
+    task = asyncio.ensure_future(hello_world(name))
+    tasks.append(task)
+loop.run_until_complete(asyncio.wait(tasks))
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Concorrência usando Asyncio</h3>
+                <pre><code class="python" data-trim>
+import time
+import asyncio
+import aiohttp
+from github import REPOS, ACCESS_TOKEN
+
+
+async def get_repo_info(loop, repo_url):
+    async with aiohttp.ClientSession(loop=loop) as session:
+        async with session.get(repo_url, params={'access_token': ACCESS_TOKEN}) as response:
+            response_data = await response.json()
+            repo_info = {
+                'name': response_data['name'],
+                'full_name': response_data['full_name'],
+                'stargazers_count': response_data['stargazers_count']
+            }
+            print(repo_info)
+
+start = time.time()
+loop = asyncio.get_event_loop()
+tasks = []
+for repo_url in REPOS:
+    task = asyncio.ensure_future(get_repo_info(loop, repo_url))
+    tasks.append(task)
+loop.run_until_complete(asyncio.wait(tasks))
+end = time.time()
+print('Tempo de execução={:.2f} segundos'.format(end - start))
+                </code></pre>
             </section>
 
             <section>
