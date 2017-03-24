@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/reveal.min.css">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/theme/solarized.min.css" id="theme">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/css/theme/black.min.css" id="theme">
     <!-- Code syntax highlighting -->
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.4.1/lib/css/zenburn.min.css">
     <!-- Printing and PDF exports -->
@@ -190,7 +190,7 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
             </section>
 
             <section>
-                <h3>Problemas com multiprocessing</h3>
+                <h3>Problemas com process</h3>
                 <p>Consumo de recursos</p>
             </section>
 
@@ -261,7 +261,7 @@ print('Tempo de execução={:.2f} segundos'.format(end - start))
             </section>
 
             <section>
-                <h3>Hello World com Asyncio</h3>
+                <h3>Hello World</h3>
                 <pre><code class="python" data-trim>
 import asyncio
 
@@ -275,7 +275,7 @@ loop.run_until_complete(hello_world())
             </section>
 
             <section>
-                <h3>Hello World com Asyncio</h3>
+                <h3>Hello World com Tasks</h3>
                 <pre><code class="python" data-trim>
 import asyncio
 
@@ -301,8 +301,8 @@ import aiohttp
 from github import REPOS, ACCESS_TOKEN
 
 
-async def get_repo_info(loop, repo_url):
-    async with aiohttp.ClientSession(loop=loop) as session:
+async def get_repo_info(repo_url):
+    async with aiohttp.ClientSession() as session:
         async with session.get(repo_url, params={'access_token': ACCESS_TOKEN}) as response:
             response_data = await response.json()
             repo_info = {
@@ -316,12 +316,225 @@ start = time.time()
 loop = asyncio.get_event_loop()
 tasks = []
 for repo_url in REPOS:
-    task = asyncio.ensure_future(get_repo_info(loop, repo_url))
+    task = asyncio.ensure_future(get_repo_info(repo_url))
     tasks.append(task)
 loop.run_until_complete(asyncio.wait(tasks))
 end = time.time()
 print('Tempo de execução={:.2f} segundos'.format(end - start))
                 </code></pre>
+            </section>
+
+            <section>
+                <h3>aio libs</h3>
+                <p>
+                    <a href="https://github.com/aio-libs" target="_blank">https://github.com/aio-libs</a>
+                </p>
+                <p>
+                    <a href="https://github.com/python/asyncio/wiki/ThirdParty" target="_blank">https://github.com/python/asyncio/wiki/ThirdParty</a>
+                </p>
+            </section>
+
+            <section>
+                <h3>paco</h3>
+                <pre><code class="python" data-trim>
+import time
+import paco
+import aiohttp
+from github import REPOS, ACCESS_TOKEN
+
+
+async def get_repo_info(repo_url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(repo_url, params={'access_token': ACCESS_TOKEN}) as response:
+            response_data = await response.json()
+            repo_info = {
+                'name': response_data['name'],
+                'full_name': response_data['full_name'],
+                'stargazers_count': response_data['stargazers_count']
+            }
+            print(repo_info)
+
+start = time.time()
+tasks = [get_repo_info(repo_url) for repo_url in REPOS]
+paco.run(paco.wait(tasks, limit=10))
+end = time.time()
+print('Tempo de execução={:.2f} segundos'.format(end - start))
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>aiohttp</h3>
+                <pre><code class="python" data-trim>
+from aiohttp import web
+
+
+async def handle(request):
+    return web.json_response({'message': 'Hello World'})
+
+app = web.Application()
+app.router.add_get('/', handle)
+web.run_app(app, host='127.0.0.1', port=8080)
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>sanic</h3>
+                <pre><code class="python" data-trim>
+from sanic import Sanic
+from sanic.response import json
+
+app = Sanic()
+
+
+@app.route('/')
+async def test(request):
+    return json({'message': 'Hello World'})
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080)
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>aioredis</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+import aioredis
+
+loop = asyncio.get_event_loop()
+
+
+async def main():
+    redis = await aioredis.create_redis(('localhost', 6379), loop=loop)
+    await redis.set('key', 'hello world')
+    val = await redis.get('key')
+    print(val)
+    redis.close()
+    await redis.wait_closed()
+
+loop.run_until_complete(main())
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>aiomcache</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+import aiomcache
+
+loop = asyncio.get_event_loop()
+
+
+async def main():
+    mc = aiomcache.Client('127.0.0.1', 11211, loop=loop)
+    await mc.set(b'key', b'hello world')
+    value = await mc.get(b'key')
+    print(value)
+
+loop.run_until_complete(main())
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>aiopg</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+import aiopg
+from speakers import SPEAKERS
+
+dsn = 'dbname=pythonday user=pythonday password=pythonday host=127.0.0.1'
+
+
+async def get_pool():
+    return await aiopg.create_pool(dsn)
+
+
+async def create_table():
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute('DROP TABLE IF EXISTS speakers')
+            await cur.execute('CREATE TABLE speakers (id serial PRIMARY KEY, name varchar(255))')
+            for speaker in SPEAKERS:
+                await cur.execute('INSERT INTO speakers (name) VALUES (%s)', (speaker,))
+
+
+async def get_speakers():
+    speakers = []
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute('SELECT * FROM speakers')
+            async for row in cur:
+                speakers.append({'id': row[0], 'name': row[1]})
+    return speakers
+
+
+async def main():
+    await create_table()
+    speakers = await get_speakers()
+    for speaker in speakers:
+        print(speaker)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>aiopg sqlalchemy</h3>
+                <pre><code class="python" data-trim>
+import asyncio
+from aiopg.sa import create_engine
+import sqlalchemy as sa
+from speakers import SPEAKERS
+
+metadata = sa.MetaData()
+speakers_table = sa.Table(
+    'speakers',
+    metadata,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('name', sa.String(255))
+)
+
+
+async def get_engine():
+    return await create_engine(
+        user='pythonday', database='pythonday', host='127.0.0.1', password='pythonday'
+    )
+
+
+async def create_table():
+    engine = await get_engine()
+    async with engine.acquire() as conn:
+        await conn.execute('DROP TABLE IF EXISTS speakers')
+        await conn.execute('CREATE TABLE speakers (id serial PRIMARY KEY, name varchar(255))')
+        for speaker in SPEAKERS:
+            await conn.execute(speakers_table.insert().values(name=speaker))
+
+
+async def get_speakers():
+    speakers = []
+    engine = await get_engine()
+    async with engine.acquire() as conn:
+        async for row in conn.execute(speakers_table.select()):
+            speakers.append({'id': row.id, 'name': row.name})
+    return speakers
+
+
+async def main():
+    await create_table()
+    speakers = await get_speakers()
+    for speaker in speakers:
+        print(speaker)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
+                </code></pre>
+            </section>
+
+            <section>
+              <h2>Perguntas?</h2>
             </section>
 
             <section>
