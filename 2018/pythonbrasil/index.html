@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Clients inteligentes com o simple-rest-client</title>
+    <meta name="description" content="Clients inteligentes com o simple-rest-client">
+    <meta name="author" content="Allisson Azevedo">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/css/reveal.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/css/theme/moon.min.css" id="theme">
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/lib/css/zenburn.min.css">
+    <!-- Printing and PDF exports -->
+    <script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match(/print-pdf/gi) ? '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/css/print/pdf.min.css' : '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/css/print/paper.min.css';
+    document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/lib/js/html5shiv.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="reveal">
+        <!-- Any section element inside of this container is displayed as a slide -->
+        <div class="slides">
+            
+            <section>
+                <h3>Clients inteligentes com o simple-rest-client</h3>
+                <p>Python Brasil 2018</p>
+                <p><a href="http://bit.ly/allisson-pybr2018-slides" target="_blank">http://bit.ly/allisson-pybr2018-slides</a></p>
+                <p><a href="http://bit.ly/allisson-pybr2018-exemplos" target="_blank">http://bit.ly/allisson-pybr2018-exemplos</a></p>
+            </section>
+
+            <section>
+                <h3>Allisson</h3>
+                <ul>
+                    <li>Desenvolvedor Python e Golang</li>
+                    <li>Atualmente trabalho na <a href="https://olist.com">Olist</a></li>
+                    <li><a href="https://about.me/allisson" target="_blank">https://about.me/allisson</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Olist</h3>
+                <ul>
+                    <li>Temos vagas!</li>
+                    <li>Trabalho remoto</li>
+                    <li><a href="https://www.99jobs.com/olist/jobs" target="_blank">https://www.99jobs.com/olist/jobs</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Vamos consumir uma api?</h3>
+                <ul>
+                    <li><a href="https://swapi.co/documentation" target="_blank">https://swapi.co/documentation</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Endpoints</h3>
+                <ul>
+                    <li><a href="https://swapi.co/api/films/" target="_blank">https://swapi.co/api/films/</a></li>
+                    <li><a href="https://swapi.co/api/people/" target="_blank">https://swapi.co/api/people/</a></li>
+                    <li><a href="https://swapi.co/api/planets/" target="_blank">https://swapi.co/api/planets/</a></li>
+                    <li><a href="https://swapi.co/api/species/" target="_blank">https://swapi.co/api/species/</a></li>
+                    <li><a href="https://swapi.co/api/starships/" target="_blank">https://swapi.co/api/starships/</a></li>
+                    <li><a href="https://swapi.co/api/vehicles/" target="_blank">https://swapi.co/api/vehicles/</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Hello World - Requests</h3>
+                <pre><code class="python" data-trim>
+                    import requests
+
+
+                    url = 'https://swapi.co/api/people/'
+                    people = requests.get(url)
+                    for person in people.json()['results']:
+                        print(person['name'])                      
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Hello World - Aiohttp</h3>
+                <pre><code class="python" data-trim>
+                    import asyncio
+
+                    import aiohttp
+                    
+                    
+                    async def get_people(session):
+                        url = 'https://swapi.co/api/people/'
+                        async with session.get(url) as response:
+                            people = await response.json()
+                            for person in people['results']:
+                                print(person['name'])
+                    
+                    
+                    async def main():
+                        async with aiohttp.ClientSession() as session:
+                            await get_people(session)
+                    
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(main())                       
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Features</h3>
+                <ul>
+                    <li>Timeout</li>
+                    <li>Exceptions</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Refatoração - Requests</h3>
+                <pre><code class="python" data-trim>
+                    import requests
+                    import status
+                    from requests.exceptions import ConnectionError, Timeout
+                    
+                    from .exceptions import ClientConnectionError, ClientError, ServerError
+                    
+                    
+                    class API:
+                        def __init__(self, timeout=5):
+                            self.api_root_url = 'https://swapi.co/api'
+                            self.session = requests.Session()
+                            self.timeout = timeout
+                    
+                        def _make_request(self, method, url, **kwargs):
+                            request_method = getattr(self.session, method.lower())
+                    
+                            try:
+                                response = request_method(url, timeout=self.timeout, **kwargs)
+                            except (ConnectionError, Timeout) as exc:
+                                raise ClientConnectionError(exc)
+                    
+                            if status.is_client_error(code=response.status_code):
+                                raise ClientError(response)
+                    
+                            if status.is_server_error(code=response.status_code):
+                                raise ServerError(response)
+                    
+                            return response
+                    
+                        def people(self, page=1):
+                            url = '{}/people/'.format(self.api_root_url)
+                            params = {'page': page}
+                            response = self._make_request('GET', url, params=params)
+                            return response.json()
+                    
+                        def people_detail(self, pk):
+                            url = '{}/people/{}/'.format(self.api_root_url, pk)
+                            response = self._make_request('GET', url)
+                            return response.json()                  
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Refatoração - Requests</h3>
+                <pre><code class="python" data-trim>
+                    from requests_example.api import API
+                    from requests_example.exceptions import ClientError
+                    
+                    api = API()
+                    
+                    
+                    def get_people():
+                        for page in range(1, 10):
+                            people = api.people(page=page)
+                            for p in people['results']:
+                                print(p['name'])
+                    
+                    
+                    def get_luke():
+                        luke = api.people_detail(1)
+                        print(luke)
+                    
+                    
+                    def get_404():
+                        try:
+                            api.people_detail(9999)
+                        except ClientError as exc:
+                            response = exc.args[0]
+                            print('ClientError, status_code={}, content={}'.format(response.status_code, response.text))
+                    
+                    
+                    get_people()
+                    get_luke()
+                    get_404()                 
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Features</h3>
+                <ul>
+                    <li>Headers globais</li>
+                    <li>Encode/Decode json</li>
+                    <li>Requests + Aiohttp</li>
+                    <li><a href="https://github.com/allisson/python-simple-rest-client" target="_blank">https://github.com/allisson/python-simple-rest-client</a></li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>simple-rest-client</h3>
+                <ul>
+                    <li>API</li>
+                    <li>Resource</li>
+                    <li>AsyncResource</li>
+                </ul>
+            </section>
+
+            <section>
+                <h3>Resources</h3>
+                <pre><code class="python" data-trim>
+                    from simple_rest_client.resource import AsyncResource, Resource
+
+
+                    films_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'films'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'films/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'films/schema',
+                        },
+                    }
+                    
+                    people_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'people'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'people/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'people/schema',
+                        },
+                    }
+                    
+                    planets_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'planets'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'planets/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'planets/schema',
+                        },
+                    }
+                    
+                    species_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'species'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'species/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'species/schema',
+                        },
+                    }
+                    
+                    starships_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'starships'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'starships/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'starships/schema',
+                        },
+                    }
+                    
+                    vehicles_actions = {
+                        'list': {
+                            'method': 'GET',
+                            'url': 'vehicles'
+                        },
+                        'retrieve': {
+                            'method': 'GET',
+                            'url': 'vehicles/{}',
+                        },
+                        'schema': {
+                            'method': 'GET',
+                            'url': 'vehicles/schema',
+                        },
+                    }
+                    
+                    
+                    class FilmsAsyncResource(AsyncResource):
+                        actions = films_actions
+                    
+                    
+                    class FilmsResource(Resource):
+                        actions = films_actions
+                    
+                    
+                    class PeopleAsyncResource(AsyncResource):
+                        actions = people_actions
+                    
+                    
+                    class PeopleResource(Resource):
+                        actions = people_actions
+                    
+                    
+                    class PlanetsAsyncResource(AsyncResource):
+                        actions = planets_actions
+                    
+                    
+                    class PlanetsResource(Resource):
+                        actions = planets_actions
+                    
+                    
+                    class SpeciesAsyncResource(AsyncResource):
+                        actions = species_actions
+                    
+                    
+                    class SpeciesResource(Resource):
+                        actions = species_actions
+                    
+                    
+                    class StarshipsAsyncResource(AsyncResource):
+                        actions = starships_actions
+                    
+                    
+                    class StarshipsResource(Resource):
+                        actions = starships_actions
+                    
+                    
+                    class VehiclesAsyncResource(AsyncResource):
+                        actions = vehicles_actions
+                    
+                    
+                    class VehiclesResource(Resource):
+                        actions = vehicles_actions                        
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>API</h3>
+                <pre><code class="python" data-trim>
+                    from simple_rest_client.api import API
+
+                    from . import resources
+                    
+                    
+                    def get_api_instance(api_root_url='https://swapi.co/api/', timeout=5):
+                        api = API(api_root_url=api_root_url, timeout=timeout)
+                        api.add_resource(resource_name='films', resource_class=resources.FilmsResource)
+                        api.add_resource(resource_name='people', resource_class=resources.PeopleResource)
+                        api.add_resource(resource_name='planets', resource_class=resources.PlanetsResource)
+                        api.add_resource(resource_name='species', resource_class=resources.SpeciesResource)
+                        api.add_resource(resource_name='starships', resource_class=resources.StarshipsResource)
+                        api.add_resource(resource_name='vehicles', resource_class=resources.VehiclesResource)
+                        return api
+                    
+                    
+                    def get_async_api_instance(api_root_url='https://swapi.co/api/', timeout=5):
+                        api = API(api_root_url=api_root_url, timeout=timeout)
+                        api.add_resource(resource_name='films', resource_class=resources.FilmsAsyncResource)
+                        api.add_resource(resource_name='people', resource_class=resources.PeopleAsyncResource)
+                        api.add_resource(resource_name='planets', resource_class=resources.PlanetsAsyncResource)
+                        api.add_resource(resource_name='species', resource_class=resources.SpeciesAsyncResource)
+                        api.add_resource(resource_name='starships', resource_class=resources.StarshipsAsyncResource)
+                        api.add_resource(resource_name='vehicles', resource_class=resources.VehiclesAsyncResource)
+                        return api                        
+            </code></pre>
+            </section>
+
+            <section>
+                <h3>Executando - Sync</h3>
+                <pre><code class="python" data-trim>
+                    from simple_rest_client.exceptions import ClientError
+
+                    from simple_rest_client_example.api import get_api_instance
+
+                    api = get_api_instance()
+
+
+                    def get_people():
+                        for page in range(1, 10):
+                            people = api.people.list(params={'page': page})
+                            for p in people.body['results']:
+                                print(p['name'])
+
+
+                    def get_luke():
+                        luke = api.people.retrieve(1)
+                        print(luke.body)
+
+
+                    def get_404():
+                        try:
+                            api.people.retrieve(9999)
+                        except ClientError as exc:
+                            print('ClientError, message={}, response={!r}'.format(exc.message, exc.response))
+
+
+                    get_people()
+                    get_luke()
+                    get_404()
+            </code></pre>
+            </section>
+
+            <section>
+                <h3>Executando - Async</h3>
+                <pre><code class="python" data-trim>
+                    import asyncio
+
+                    from simple_rest_client.exceptions import ClientError
+
+                    from simple_rest_client_example.api import get_async_api_instance
+
+                    api = get_async_api_instance()
+
+
+                    async def _get_people(page):
+                        people = await api.people.list(params={'page': page})
+                        for p in people.body['results']:
+                            print(p['name'])
+
+
+                    async def get_people():
+                        tasks = [_get_people(page) for page in range(1, 10)]
+                        await asyncio.gather(*tasks)
+
+
+                    async def get_luke():
+                        luke = await api.people.retrieve(1)
+                        print(luke.body)
+
+
+                    async def get_404():
+                        try:
+                            await api.people.retrieve(9999)
+                        except ClientError as exc:
+                            print('ClientError, message={}, response={!r}'.format(exc.message, exc.response))
+
+
+                    async def main():
+                        # await asyncio.gather(get_people(), get_luke(), get_404())
+                        await get_people()
+                        await get_luke()
+                        await get_404()
+
+
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(main())
+            </code></pre>
+            </section>
+
+        </div>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/lib/js/head.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/js/reveal.min.js"></script>
+    <script>
+    Reveal.initialize({
+        controls: false,
+        progress: true,
+        history: true,
+        center: true,
+        slideNumber: 'c/t',
+        transition: 'slide', // none/fade/slide/convex/concave/zoom
+        dependencies: [{
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/lib/js/classList.min.js',
+            condition: function() {
+                return !document.body.classList;
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/plugin/markdown/marked.min.js',
+            condition: function() {
+                return !!document.querySelector('[data-markdown]');
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/plugin/markdown/markdown.min.js',
+            condition: function() {
+                return !!document.querySelector('[data-markdown]');
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/plugin/highlight/highlight.min.js',
+            async: true,
+            callback: function() {
+                hljs.initHighlightingOnLoad();
+            }
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/plugin/zoom-js/zoom.min.js',
+            async: true
+        }, {
+            src: '//cdnjs.cloudflare.com/ajax/libs/reveal.js/3.7.0/plugin/notes/notes.min.js',
+            async: true
+        }]
+    });
+    </script>
+</body>
+
+</html>
