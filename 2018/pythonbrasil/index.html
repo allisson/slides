@@ -215,31 +215,16 @@
                 <h3>simple-rest-client</h3>
                 <ul>
                     <li>API</li>
-                    <li>Resource</li>
-                    <li>AsyncResource</li>
+                    <li>Resource/AsyncResource</li>
+                    <li>Actions</li>
                 </ul>
             </section>
 
             <section>
-                <h3>Resources</h3>
+                <h3>Resource e Actions</h3>
                 <pre><code class="python" data-trim>
                     from simple_rest_client.resource import AsyncResource, Resource
 
-
-                    films_actions = {
-                        'list': {
-                            'method': 'GET',
-                            'url': 'films'
-                        },
-                        'retrieve': {
-                            'method': 'GET',
-                            'url': 'films/{}',
-                        },
-                        'schema': {
-                            'method': 'GET',
-                            'url': 'films/schema',
-                        },
-                    }
                     
                     people_actions = {
                         'list': {
@@ -256,113 +241,13 @@
                         },
                     }
                     
-                    planets_actions = {
-                        'list': {
-                            'method': 'GET',
-                            'url': 'planets'
-                        },
-                        'retrieve': {
-                            'method': 'GET',
-                            'url': 'planets/{}',
-                        },
-                        'schema': {
-                            'method': 'GET',
-                            'url': 'planets/schema',
-                        },
-                    }
-                    
-                    species_actions = {
-                        'list': {
-                            'method': 'GET',
-                            'url': 'species'
-                        },
-                        'retrieve': {
-                            'method': 'GET',
-                            'url': 'species/{}',
-                        },
-                        'schema': {
-                            'method': 'GET',
-                            'url': 'species/schema',
-                        },
-                    }
-                    
-                    starships_actions = {
-                        'list': {
-                            'method': 'GET',
-                            'url': 'starships'
-                        },
-                        'retrieve': {
-                            'method': 'GET',
-                            'url': 'starships/{}',
-                        },
-                        'schema': {
-                            'method': 'GET',
-                            'url': 'starships/schema',
-                        },
-                    }
-                    
-                    vehicles_actions = {
-                        'list': {
-                            'method': 'GET',
-                            'url': 'vehicles'
-                        },
-                        'retrieve': {
-                            'method': 'GET',
-                            'url': 'vehicles/{}',
-                        },
-                        'schema': {
-                            'method': 'GET',
-                            'url': 'vehicles/schema',
-                        },
-                    }
-                    
-                    
-                    class FilmsAsyncResource(AsyncResource):
-                        actions = films_actions
-                    
-                    
-                    class FilmsResource(Resource):
-                        actions = films_actions
-                    
                     
                     class PeopleAsyncResource(AsyncResource):
                         actions = people_actions
                     
                     
                     class PeopleResource(Resource):
-                        actions = people_actions
-                    
-                    
-                    class PlanetsAsyncResource(AsyncResource):
-                        actions = planets_actions
-                    
-                    
-                    class PlanetsResource(Resource):
-                        actions = planets_actions
-                    
-                    
-                    class SpeciesAsyncResource(AsyncResource):
-                        actions = species_actions
-                    
-                    
-                    class SpeciesResource(Resource):
-                        actions = species_actions
-                    
-                    
-                    class StarshipsAsyncResource(AsyncResource):
-                        actions = starships_actions
-                    
-                    
-                    class StarshipsResource(Resource):
-                        actions = starships_actions
-                    
-                    
-                    class VehiclesAsyncResource(AsyncResource):
-                        actions = vehicles_actions
-                    
-                    
-                    class VehiclesResource(Resource):
-                        actions = vehicles_actions                        
+                        actions = people_actions                   
                 </code></pre>
             </section>
 
@@ -376,23 +261,13 @@
                     
                     def get_api_instance(api_root_url='https://swapi.co/api/', timeout=5):
                         api = API(api_root_url=api_root_url, timeout=timeout)
-                        api.add_resource(resource_name='films', resource_class=resources.FilmsResource)
                         api.add_resource(resource_name='people', resource_class=resources.PeopleResource)
-                        api.add_resource(resource_name='planets', resource_class=resources.PlanetsResource)
-                        api.add_resource(resource_name='species', resource_class=resources.SpeciesResource)
-                        api.add_resource(resource_name='starships', resource_class=resources.StarshipsResource)
-                        api.add_resource(resource_name='vehicles', resource_class=resources.VehiclesResource)
                         return api
                     
                     
                     def get_async_api_instance(api_root_url='https://swapi.co/api/', timeout=5):
                         api = API(api_root_url=api_root_url, timeout=timeout)
-                        api.add_resource(resource_name='films', resource_class=resources.FilmsAsyncResource)
                         api.add_resource(resource_name='people', resource_class=resources.PeopleAsyncResource)
-                        api.add_resource(resource_name='planets', resource_class=resources.PlanetsAsyncResource)
-                        api.add_resource(resource_name='species', resource_class=resources.SpeciesAsyncResource)
-                        api.add_resource(resource_name='starships', resource_class=resources.StarshipsAsyncResource)
-                        api.add_resource(resource_name='vehicles', resource_class=resources.VehiclesAsyncResource)
                         return api                        
             </code></pre>
             </section>
@@ -409,14 +284,14 @@
 
                     def get_people():
                         for page in range(1, 10):
-                            people = api.people.list(params={'page': page})
-                            for p in people.body['results']:
+                            response = api.people.list(params={'page': page})
+                            for p in response.body['results']:
                                 print(p['name'])
 
 
                     def get_luke():
-                        luke = api.people.retrieve(1)
-                        print(luke.body)
+                        response = api.people.retrieve(1)
+                        print(response.body)
 
 
                     def get_404():
@@ -445,8 +320,8 @@
 
 
                     async def _get_people(page):
-                        people = await api.people.list(params={'page': page})
-                        for p in people.body['results']:
+                        response = await api.people.list(params={'page': page})
+                        for p in response.body['results']:
                             print(p['name'])
 
 
@@ -456,8 +331,8 @@
 
 
                     async def get_luke():
-                        luke = await api.people.retrieve(1)
-                        print(luke.body)
+                        response = await api.people.retrieve(1)
+                        print(response.body)
 
 
                     async def get_404():
@@ -477,6 +352,14 @@
                     loop = asyncio.get_event_loop()
                     loop.run_until_complete(main())
             </code></pre>
+            </section>
+
+            <section>
+                <h3>Demonstração</h3>
+            </section>
+
+            <section>
+                <h3>Obrigado!</h3>
             </section>
 
         </div>
